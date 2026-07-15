@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #050709;
+  --color-surface-elevated: #10131a;
+  --color-surface-muted: #161a23;
+  --color-border-subtle: #1f2533;
+  --color-accent: #4ea8de;
+  --color-accent-strong: #38bdf8;
+  --color-danger: #f97373;
+  --color-success: #4ade80;
+  --color-text: #f8fafc;
+  --color-text-muted: #9ca3af;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-[var(--color-surface)] text-[var(--color-text)] antialiased;
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)] shadow-[0_18px_45px_rgba(0,0,0,0.55)];
+  }
+
+  .btn-primary,
+  .btn-danger,
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium
+      transition-transform duration-100 ease-out
+      disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)];
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-br from-[#4ea8de] to-[#38bdf8] text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(56,189,248,0.35)];
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-br from-[#ef4444] to-[#f87171] text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(239,68,68,0.3)];
+  }
+
+  .btn-secondary {
+    @apply border border-[var(--color-border-subtle)] bg-transparent text-[var(--color-text)] hover:bg-white/5;
+  }
+
+  .field {
+    @apply w-full rounded-lg border border-[#1e293b] bg-[#020617] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-slate-500
+      focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/40;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-white/5;
+  }
+}
