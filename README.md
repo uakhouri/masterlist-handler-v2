@@ -116,3 +116,37 @@ VITE_API_URL=http://localhost:5000/api
 
 Neither `.env` file is committed — see `.env.example` in each project for
 the required keys.
+
+## Deployment (free tier)
+
+**Backend — Render**
+
+1. On [Render](https://render.com), click **New +** → **Blueprint**, connect
+   this GitHub repo. Render will detect `render.yaml` at the repo root and
+   pre-fill a web service rooted at `backend/`.
+2. When prompted, fill in the secret env vars: `MONGO_URI`, `JWT_SECRET`,
+   and `CORS_ORIGIN` (set this to your Vercel frontend URL once you have
+   it — comma-separate multiple origins if needed).
+3. Deploy. Render assigns a URL like `https://masterlist-portal-backend.onrender.com`.
+   `GET /api/health` is used as the health check.
+4. Free tier note: the service spins down after ~15 minutes idle; the next
+   request takes 20-50s to wake it back up.
+
+**Frontend — Vercel**
+
+1. On [Vercel](https://vercel.com), **Add New** → **Project**, import this repo.
+2. Set **Root Directory** to `frontend`. Framework preset should
+   auto-detect as Vite (build command `npm run build`, output `dist`).
+3. Add an environment variable `VITE_API_URL` set to
+   `https://<your-render-service>.onrender.com/api`.
+4. Deploy. Vercel assigns a URL like `https://masterlist-portal.vercel.app`.
+   `frontend/vercel.json` handles SPA routing so React Router's client-side
+   routes work on refresh/direct link.
+5. Go back to Render and set `CORS_ORIGIN` to this Vercel URL, then
+   redeploy the backend so the browser is allowed to call the API.
+
+**Database — MongoDB Atlas**
+
+Already in use per the stack table above. In Atlas, under Network Access,
+allow access from anywhere (`0.0.0.0/0`) so Render's dynamic egress IPs can
+connect, since the free tier doesn't offer static IPs.
