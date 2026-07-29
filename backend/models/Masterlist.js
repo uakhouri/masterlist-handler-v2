@@ -6,6 +6,7 @@ const trialSchema = new mongoose.Schema({
   phase: String,
   study_type: String,
   sponsor: String,
+  url: String,
   location: [String],
   inclusion_criteria: [String],
   exclusion_criteria: [String]

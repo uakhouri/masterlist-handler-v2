@@ -34,12 +34,12 @@ export default function ConfirmDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
       onClick={onCancel}
     >
-      <div className="card w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
-        <h2 id="confirm-dialog-title" className="mb-1 text-base font-semibold">
+      <div className="card w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 id="confirm-dialog-title" className="mb-2 text-base font-semibold text-[var(--color-text)]">
           {title}
         </h2>
-        {description && <p className="mb-4 text-sm text-[var(--color-text-muted)]">{description}</p>}
-        <div className="flex justify-end gap-2">
+        {description && <p className="mb-5 text-sm leading-relaxed text-[var(--color-text-muted)]">{description}</p>}
+        <div className="flex justify-end gap-2.5">
           <button className="btn-secondary" onClick={onCancel}>
             Cancel
           </button>

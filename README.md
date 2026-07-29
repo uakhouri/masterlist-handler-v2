@@ -3,7 +3,8 @@
 A portal for curating HER2+ breast cancer clinical trial "masterlists". Users
 create named masterlists, then add trials by NCT id — the backend fetches
 and parses the trial record from clinicaltrials.gov and retains only
-Canadian (or plausibly Canadian) trial sites.
+Canadian (or plausibly Canadian) trial sites, plus Bethesda, Maryland (the
+NIH Clinical Center).
 
 This is a MERN-stack app split into two independently deployable projects:
 
@@ -57,7 +58,9 @@ everything under `/masterlists` requires `Authorization: Bearer <token>`.
 | GET    | `/masterlists/:id`                 | Get a masterlist with its trials      |
 | DELETE | `/masterlists/:id`                 | Delete a masterlist                   |
 | POST   | `/masterlists/:id/trials`          | Add trial(s) by `{ nct }` / `{ ncts }`|
+| PUT    | `/masterlists/:id/trials/:nct`     | Edit a trial's fields                 |
 | DELETE | `/masterlists/:id/trials/:nct`     | Remove a trial from a masterlist      |
+| GET    | `/masterlists/:id/export`          | Download the masterlist as a .docx    |
 
 Responses use a consistent envelope: `{ success, data }` on success,
 `{ success: false, message }` or `{ success: false, errors: [...] }` on
@@ -69,8 +72,10 @@ failure.
 
 **Masterlist**: `name`, `cancerType`, `user` (creator reference), `trials[]`,
 timestamps. Each trial subdocument stores `nct`, `title`, `phase`,
-`study_type`, `sponsor`, `location[]`, `inclusion_criteria[]`,
-`exclusion_criteria[]`.
+`study_type`, `sponsor`, `url` (link to the trial on clinicaltrials.gov),
+`location[]`, `inclusion_criteria[]`, `exclusion_criteria[]`. Trials are kept
+sorted by `study_type` then `phase` so same-type/same-phase trials sit
+together, re-sorted whenever trials are added or edited.
 
 ## Hardening included
 

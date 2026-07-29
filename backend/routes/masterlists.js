@@ -4,10 +4,16 @@ const { body, query, validationResult } = require('express-validator');
 const Masterlist = require('../models/Masterlist');
 const auth = require('../middleware/auth');
 const { fetchTrialByNct } = require('../utils/clinicalTrialsClient');
+const { sortTrials } = require('../utils/sortTrials');
+const { buildMasterlistDocx } = require('../utils/exportDocx');
 
 const router = express.Router();
 
 router.use(auth);
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * @route   GET /api/masterlists
@@ -34,8 +40,10 @@ router.get(
     const filter = search
       ? {
           $or: [
-            { name: new RegExp(search, 'i') },
-            { cancerType: new RegExp(search, 'i') }
+            { name: new RegExp(escapeRegex(search), 'i') },
+            { cancerType: new RegExp(escapeRegex(search), 'i') },
+            { 'trials.title': new RegExp(escapeRegex(search), 'i') },
+            { 'trials.nct': new RegExp(escapeRegex(search), 'i') }
           ]
         }
       : {};
@@ -174,6 +182,7 @@ router.post(
       }
     }
 
+    masterlist.trials = sortTrials(masterlist.trials);
     await masterlist.save();
 
     res.status(201).json({
@@ -181,6 +190,97 @@ router.post(
       data: masterlist,
       summary: { added, skipped }
     });
+  })
+);
+
+/**
+ * @route   PUT /api/masterlists/:id/trials/:nct
+ * @desc    Edit a trial's fields within a masterlist
+ * @access  Private
+ *
+ * Body may include any of: title, phase, study_type, sponsor,
+ * location, inclusion_criteria, exclusion_criteria (arrays of strings).
+ * Only fields present in the body are updated.
+ */
+router.put(
+  '/:id/trials/:nct',
+  [
+    body('title').optional().isString().trim(),
+    body('phase').optional().isString().trim(),
+    body('study_type').optional().isString().trim(),
+    body('sponsor').optional().isString().trim(),
+    body('location').optional().isArray(),
+    body('location.*').optional().isString(),
+    body('inclusion_criteria').optional().isArray(),
+    body('inclusion_criteria.*').optional().isString(),
+    body('exclusion_criteria').optional().isArray(),
+    body('exclusion_criteria.*').optional().isString()
+  ],
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { id, nct } = req.params;
+    const editableFields = [
+      'title',
+      'phase',
+      'study_type',
+      'sponsor',
+      'location',
+      'inclusion_criteria',
+      'exclusion_criteria'
+    ];
+
+    const updates = editableFields.reduce((acc, field) => {
+      if (req.body[field] !== undefined) acc[field] = req.body[field];
+      return acc;
+    }, {});
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: 'No editable fields provided' });
+    }
+
+    const masterlist = await Masterlist.findById(id);
+    if (!masterlist) {
+      return res.status(404).json({ success: false, message: 'Masterlist not found' });
+    }
+
+    const trial = masterlist.trials.find((t) => t.nct.toLowerCase() === nct.toLowerCase());
+    if (!trial) {
+      return res.status(404).json({ success: false, message: 'Trial with this NCT not found in masterlist' });
+    }
+
+    Object.assign(trial, updates);
+    masterlist.trials = sortTrials(masterlist.trials);
+    await masterlist.save();
+
+    res.json({ success: true, data: masterlist });
+  })
+);
+
+/**
+ * @route   GET /api/masterlists/:id/export
+ * @desc    Export a masterlist and its trials as a downloadable .docx file
+ * @access  Private
+ */
+router.get(
+  '/:id/export',
+  asyncHandler(async (req, res) => {
+    const masterlist = await Masterlist.findById(req.params.id);
+    if (!masterlist) {
+      return res.status(404).json({ success: false, message: 'Masterlist not found' });
+    }
+
+    const buffer = await buildMasterlistDocx(masterlist);
+    const filename = `${masterlist.name.replace(/[^a-z0-9\-_]+/gi, '_')}.docx`;
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Disposition': `attachment; filename="${filename}"`
+    });
+    res.send(buffer);
   })
 );
 

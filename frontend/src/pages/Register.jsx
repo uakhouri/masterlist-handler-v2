@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -45,90 +46,90 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">
-      <div className="card w-full max-w-md p-7">
-        <h1 className="mb-1 text-xl font-semibold">Create an account</h1>
-        <p className="mb-5 text-sm text-[var(--color-text-muted)]">
-          Sign up to manage HER2+ breast cancer masterlists.
-        </p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-          <div>
-            <label htmlFor="name" className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              name="name"
-              autoComplete="name"
-              placeholder="Jane Doe"
-              value={form.name}
-              onChange={handleChange}
-              className="field"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-              className="field"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              autoComplete="new-password"
-              placeholder="Min. 6 characters"
-              value={form.password}
-              onChange={handleChange}
-              className="field"
-              required
-              minLength={6}
-            />
-            {form.password && (
-              <div className="mt-1.5 flex items-center gap-2">
-                <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className={`h-full ${strengthColor} transition-all`}
-                    style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs text-[var(--color-text-muted)]">{strengthLabel}</span>
+    <AuthLayout
+      eyebrow="Create account"
+      title="Create an account"
+      subtitle="Sign up to start curating clinical trial masterlists."
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+        <div>
+          <label htmlFor="name" className="field-label">
+            Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            name="name"
+            autoComplete="name"
+            placeholder="Jane Doe"
+            value={form.name}
+            onChange={handleChange}
+            className="field"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="field-label">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={handleChange}
+            className="field"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="field-label">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            autoComplete="new-password"
+            placeholder="Min. 6 characters"
+            value={form.password}
+            onChange={handleChange}
+            className="field"
+            required
+            minLength={6}
+          />
+          {form.password && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full ${strengthColor} transition-all`}
+                  style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                />
               </div>
-            )}
-          </div>
-
-          <button type="submit" className="btn-primary mt-1" disabled={loading}>
-            {loading ? 'Creating account…' : 'Register'}
-          </button>
-
-          {error && (
-            <div role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-[var(--color-danger)]">
-              {error}
+              <span className="text-xs text-[var(--color-text-muted)]">{strengthLabel}</span>
             </div>
           )}
+        </div>
 
-          <div className="pt-1 text-sm text-[var(--color-text-muted)]">
-            Already have an account? <Link to="/login" className="text-[var(--color-accent)]">Login</Link>
+        <button type="submit" className="btn-primary mt-1 w-full" disabled={loading}>
+          {loading ? 'Creating account…' : 'Register'}
+        </button>
+
+        {error && (
+          <div role="alert" className="alert-danger">
+            {error}
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <div className="pt-1 text-sm text-[var(--color-text-muted)]">
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-[var(--color-accent)] hover:underline">
+            Login
+          </Link>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

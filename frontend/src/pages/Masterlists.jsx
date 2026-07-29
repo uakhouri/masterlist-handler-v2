@@ -15,6 +15,7 @@ export default function Masterlists() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [form, setForm] = useState({ name: '', cancerType: '' });
   const [searchInput, setSearchInput] = useState('');
   const search = useDebouncedValue(searchInput);
@@ -50,6 +51,7 @@ export default function Masterlists() {
     try {
       const res = await axiosClient.post('/masterlists', form);
       setForm({ name: '', cancerType: '' });
+      setShowCreateForm(false);
       toast.success('Masterlist created');
       setMasterlists((prev) => [res.data.data, ...prev]);
       setPagination((prev) => ({ ...prev, total: prev.total + 1 }));
@@ -83,63 +85,108 @@ export default function Masterlists() {
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
+      <div className="page-header">
         <div>
-          <h1 className="text-xl font-semibold">Masterlists</h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Create and manage curated HER2+ breast cancer clinical trial sets.
+          <h1 className="page-title">Masterlists</h1>
+          <p className="page-subtitle">
+            Create and manage curated clinical trial sets sourced from ClinicalTrials.gov.
           </p>
         </div>
-        <div className="flex gap-4 text-sm text-[var(--color-text-muted)]">
-          <span>
-            <strong className="text-slate-100">{pagination.total}</strong> masterlists
-          </span>
-          <span>
-            <strong className="text-slate-100">{totalTrials}</strong> trials (this page)
-          </span>
+        <button className="btn-primary" onClick={() => setShowCreateForm((v) => !v)}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New masterlist
+        </button>
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-3">
+        <div className="stat-pill">
+          <span className="text-xs font-medium text-[var(--color-text-faint)]">Masterlists</span>
+          <span className="text-lg font-semibold text-[var(--color-text)]">{pagination.total}</span>
+        </div>
+        <div className="stat-pill">
+          <span className="text-xs font-medium text-[var(--color-text-faint)]">Trials (this page)</span>
+          <span className="text-lg font-semibold text-[var(--color-text)]">{totalTrials}</span>
         </div>
       </div>
 
-      <section
-        className="card mb-5 p-4"
-        style={{ background: 'radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 60%), var(--color-surface-elevated)' }}
-      >
-        <h2 className="mb-2 text-sm font-semibold">New masterlist</h2>
-        <form onSubmit={handleCreate} className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            name="name"
-            placeholder="Masterlist name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            className="field flex-1 basis-56"
-          />
-          <input
-            type="text"
-            name="cancerType"
-            placeholder="Cancer type"
-            value={form.cancerType}
-            onChange={handleChange}
-            required
-            className="field flex-1 basis-44"
-          />
-          <button type="submit" className="btn-primary" disabled={creating}>
-            {creating ? 'Creating…' : 'Create'}
-          </button>
-        </form>
-        {error && <div className="mt-2 text-sm text-[var(--color-danger)]">{error}</div>}
-      </section>
+      {showCreateForm && (
+        <section className="card mb-6 p-5 sm:p-6">
+          <h2 className="mb-4 text-base font-semibold text-[var(--color-text)]">New masterlist</h2>
+          <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1 basis-56">
+              <label htmlFor="ml-name" className="field-label">
+                Name
+              </label>
+              <input
+                id="ml-name"
+                type="text"
+                name="name"
+                placeholder="e.g. HER2+ MBC — First Line"
+                value={form.name}
+                onChange={handleChange}
+                required
+                className="field"
+                autoFocus
+              />
+            </div>
+            <div className="flex-1 basis-44">
+              <label htmlFor="ml-cancer-type" className="field-label">
+                Cancer type
+              </label>
+              <input
+                id="ml-cancer-type"
+                type="text"
+                name="cancerType"
+                placeholder="e.g. Breast cancer"
+                value={form.cancerType}
+                onChange={handleChange}
+                required
+                className="field"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary" disabled={creating}>
+                {creating ? 'Creating…' : 'Create'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+          {error && (
+            <div className="alert-danger mt-3">
+              {error}
+            </div>
+          )}
+        </section>
+      )}
 
-      <div className="mb-3">
-        <input
-          type="search"
-          placeholder="Search by name or cancer type…"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="field max-w-sm"
-          aria-label="Search masterlists"
-        />
+      <div className="mb-5">
+        <div className="relative max-w-sm">
+          <svg
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Search by name, cancer type, or trial…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="field pl-9"
+            aria-label="Search masterlists"
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -150,33 +197,52 @@ export default function Masterlists() {
           description={
             search
               ? 'Try a different search term.'
-              : 'Use the form above to create your first masterlist.'
+              : 'Use the "New masterlist" button above to create your first one.'
           }
         />
       ) : (
         <>
-          <ul className="space-y-3">
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {masterlists.map((m) => (
-              <li key={m._id} className="card flex items-center justify-between gap-3 p-4">
-                <div className="min-w-0 flex-1">
-                  <Link to={`/masterlists/${m._id}`} className="font-semibold hover:underline">
-                    {m.name}
-                  </Link>
-                  <div className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                    Cancer type: {m.cancerType}
-                  </div>
-                  <div className="mt-0.5 text-xs text-slate-500">
-                    Trials: {m.trials?.length ?? 0}
-                  </div>
-                </div>
-                <button className="btn-danger shrink-0" onClick={() => handleDelete(m._id, m.name)}>
-                  Delete
+              <li
+                key={m._id}
+                className="card group relative flex flex-col gap-3 p-5 transition-colors hover:border-[var(--color-accent)]/40"
+              >
+                <button
+                  className="icon-btn absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 hover:!text-[var(--color-danger)]"
+                  onClick={() => handleDelete(m._id, m.name)}
+                  aria-label={`Delete ${m.name}`}
+                  title="Delete masterlist"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+                  </svg>
                 </button>
+
+                <Link to={`/masterlists/${m._id}`} className="min-w-0 pr-8 no-underline">
+                  <h2 className="truncate text-base font-semibold text-[var(--color-text)] group-hover:text-[var(--color-accent)]">
+                    {m.name}
+                  </h2>
+                </Link>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="badge-accent">{m.cancerType}</span>
+                  <span className="badge">
+                    {m.trials?.length ?? 0} trial{m.trials?.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                <Link
+                  to={`/masterlists/${m._id}`}
+                  className="mt-1 text-sm font-medium text-[var(--color-accent)] hover:underline"
+                >
+                  Open masterlist &rarr;
+                </Link>
               </li>
             ))}
           </ul>
 
-          <div className="mt-4">
+          <div className="mt-6">
             <Pagination page={pagination.page} pages={pagination.pages} onChange={loadMasterlists} />
           </div>
         </>

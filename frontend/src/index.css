@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface: #050709;
-  --color-surface-elevated: #10131a;
-  --color-surface-muted: #161a23;
-  --color-border-subtle: #1f2533;
-  --color-accent: #4ea8de;
-  --color-accent-strong: #38bdf8;
-  --color-danger: #f97373;
-  --color-success: #4ade80;
-  --color-text: #f8fafc;
-  --color-text-muted: #9ca3af;
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-surface: #0a0e16;
+  --color-surface-elevated: #131826;
+  --color-surface-muted: #1a2032;
+  --color-surface-hover: #1f2638;
+  --color-border: #262e42;
+  --color-border-subtle: #1c2233;
+  --color-accent: #60a5fa;
+  --color-accent-strong: #3b82f6;
+  --color-accent-soft: #1e3a5f;
+  --color-danger: #fb7185;
+  --color-danger-strong: #ef4444;
+  --color-success: #34d399;
+  --color-text: #f4f6fb;
+  --color-text-muted: #aab3c5;
+  --color-text-faint: #7d879b;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html {
@@ -21,40 +26,113 @@ html {
 body {
   @apply bg-[var(--color-surface)] text-[var(--color-text)] antialiased;
   font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 1.55;
+  background-image: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(59, 130, 246, 0.12), transparent);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.015em;
+}
+
+::selection {
+  background: rgba(96, 165, 250, 0.3);
 }
 
 @layer components {
   .card {
-    @apply rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-elevated)] shadow-[0_18px_45px_rgba(0,0,0,0.55)];
+    @apply rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] shadow-[0_1px_0_rgba(255,255,255,0.03)_inset,0_20px_40px_-12px_rgba(0,0,0,0.55)];
+  }
+
+  .card-flat {
+    @apply rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-muted)];
   }
 
   .btn-primary,
   .btn-danger,
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium
-      transition-transform duration-100 ease-out
-      disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none
+  .btn-secondary,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold whitespace-nowrap
+      transition-all duration-150 ease-out
+      disabled:cursor-not-allowed disabled:opacity-50
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)];
   }
 
   .btn-primary {
-    @apply bg-gradient-to-br from-[#4ea8de] to-[#38bdf8] text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(56,189,248,0.35)];
+    @apply bg-[var(--color-accent-strong)] text-white shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_8px_20px_-8px_rgba(59,130,246,0.7)]
+      hover:bg-[#2563eb] active:scale-[0.98];
   }
 
   .btn-danger {
-    @apply bg-gradient-to-br from-[#ef4444] to-[#f87171] text-white hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(239,68,68,0.3)];
+    @apply bg-[var(--color-danger-strong)] text-white shadow-[0_1px_0_rgba(255,255,255,0.15)_inset,0_8px_20px_-8px_rgba(239,68,68,0.6)]
+      hover:bg-[#dc2626] active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply border border-[var(--color-border-subtle)] bg-transparent text-[var(--color-text)] hover:bg-white/5;
+    @apply border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)]
+      hover:border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-text)];
+  }
+
+  .icon-btn {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent
+      text-[var(--color-text-faint)] transition-colors duration-150
+      hover:border-[var(--color-border)] hover:bg-white/5 hover:text-[var(--color-text)]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)];
   }
 
   .field {
-    @apply w-full rounded-lg border border-[#1e293b] bg-[#020617] px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-slate-500
-      focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/40;
+    @apply w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-faint)]
+      transition-colors duration-150
+      focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[var(--color-text-faint)];
   }
 
   .skeleton {
-    @apply animate-pulse rounded-lg bg-white/5;
+    @apply animate-pulse rounded-lg bg-white/8;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-muted)];
+  }
+
+  .badge-accent {
+    @apply inline-flex items-center rounded-md border border-[var(--color-accent)]/25 bg-[var(--color-accent-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-accent)];
+  }
+
+  .stat-pill {
+    @apply flex flex-col gap-0.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-4 py-2.5;
+  }
+
+  .avatar {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-xs font-semibold text-[var(--color-accent)];
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text)];
+  }
+
+  .alert-danger {
+    @apply flex items-start gap-2 rounded-lg border border-[var(--color-danger-strong)]/20 bg-[var(--color-danger-strong)]/10 px-3 py-2.5 text-sm text-[var(--color-danger)];
+  }
+
+  .page-header {
+    @apply mb-7 flex flex-wrap items-start justify-between gap-4;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-[var(--color-text)];
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-[var(--color-text-muted)];
   }
 }

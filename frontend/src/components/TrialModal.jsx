@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
+import { getTrialUrl } from '../utils/trialUrl';
 
 export default function TrialModal({ trial, onClose }) {
   const closeRef = useRef(null);
+  const trialUrl = trial ? getTrialUrl(trial) : null;
 
   useEffect(() => {
     if (trial) closeRef.current?.focus();
@@ -27,73 +29,80 @@ export default function TrialModal({ trial, onClose }) {
       onClick={onClose}
     >
       <div
-        className="card max-h-[80vh] w-full max-w-3xl overflow-y-auto p-6"
-        style={{
-          background:
-            'radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 60%), var(--color-surface-elevated)'
-        }}
+        className="card max-h-[85vh] w-full max-w-3xl overflow-y-auto p-7 sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex justify-between gap-4">
+        <div className="mb-5 flex justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="text-xs text-[var(--color-text-muted)]">{trial.nct}</div>
-            <h2 id="trial-modal-title" className="mt-1 mb-2 text-lg font-semibold">
-              {trial.title}
-            </h2>
-            <div className="text-sm text-[var(--color-text-muted)]">
-              Phase: {trial.phase || 'N/A'} &middot; Study type: {trial.study_type || 'N/A'}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge">{trial.nct}</span>
+              {trial.phase && <span className="badge">{trial.phase}</span>}
+              {trial.study_type && <span className="badge">{trial.study_type}</span>}
             </div>
-            <div className="text-sm text-[var(--color-text-muted)]">
+            <h2 id="trial-modal-title" className="mt-3 text-xl font-semibold leading-snug text-[var(--color-text)]">
+              {trial.title || 'Untitled trial'}
+            </h2>
+            <div className="mt-2 text-sm text-[var(--color-text-muted)]">
               Sponsor: {trial.sponsor || 'N/A'}
             </div>
+            {trialUrl && (
+              <a
+                href={trialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-sm font-medium text-[var(--color-accent)] hover:underline"
+              >
+                View on ClinicalTrials.gov &rarr;
+              </a>
+            )}
           </div>
           <button ref={closeRef} className="btn-secondary h-fit shrink-0" onClick={onClose}>
             Close
           </button>
         </div>
 
-        <hr className="my-3 border-[var(--color-border-subtle)]" />
+        <div className="space-y-4">
+          <section className="rounded-lg bg-[var(--color-surface-muted)] p-4">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-text)]">Locations</h3>
+            {trial.location?.length ? (
+              <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed">
+                {trial.location.map((loc, idx) => (
+                  <li key={idx}>{loc}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--color-text-muted)]">No locations captured for this trial.</p>
+            )}
+          </section>
 
-        <section className="mb-4">
-          <h3 className="mb-1 text-sm font-semibold">Locations</h3>
-          {trial.location?.length ? (
-            <ul className="list-disc space-y-0.5 pl-5 text-sm">
-              {trial.location.map((loc, idx) => (
-                <li key={idx}>{loc}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[var(--color-text-muted)]">No locations captured for this trial.</p>
-          )}
-        </section>
+          <section className="rounded-lg bg-[var(--color-surface-muted)] p-4">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-text)]">Inclusion criteria</h3>
+            {trial.inclusion_criteria?.length ? (
+              <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed">
+                {trial.inclusion_criteria.map((c, idx) => (
+                  <li key={idx}>{c}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--color-text-muted)]">Not specified.</p>
+            )}
+          </section>
 
-        <section className="mb-4">
-          <h3 className="mb-1 text-sm font-semibold">Inclusion criteria</h3>
-          {trial.inclusion_criteria?.length ? (
-            <ul className="list-disc space-y-0.5 pl-5 text-sm">
-              {trial.inclusion_criteria.map((c, idx) => (
-                <li key={idx}>{c}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[var(--color-text-muted)]">Not specified.</p>
-          )}
-        </section>
+          <section className="rounded-lg bg-[var(--color-surface-muted)] p-4">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-text)]">Exclusion criteria</h3>
+            {trial.exclusion_criteria?.length ? (
+              <ul className="list-disc space-y-1.5 pl-5 text-sm leading-relaxed">
+                {trial.exclusion_criteria.map((c, idx) => (
+                  <li key={idx}>{c}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--color-text-muted)]">Not specified.</p>
+            )}
+          </section>
+        </div>
 
-        <section className="mb-2">
-          <h3 className="mb-1 text-sm font-semibold">Exclusion criteria</h3>
-          {trial.exclusion_criteria?.length ? (
-            <ul className="list-disc space-y-0.5 pl-5 text-sm">
-              {trial.exclusion_criteria.map((c, idx) => (
-                <li key={idx}>{c}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-[var(--color-text-muted)]">Not specified.</p>
-          )}
-        </section>
-
-        <div className="text-xs text-[var(--color-text-muted)]">
+        <div className="mt-5 text-xs text-[var(--color-text-faint)]">
           Data imported from clinicaltrials.gov using NCT: {trial.nct}
         </div>
       </div>

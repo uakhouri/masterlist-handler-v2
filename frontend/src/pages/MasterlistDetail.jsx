@@ -3,9 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosClient, { extractErrorMessage } from '../api/axiosClient';
 import TrialModal from '../components/TrialModal';
+import EditTrialModal from '../components/EditTrialModal';
 import EmptyState from '../components/EmptyState';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useConfirm } from '../hooks/useConfirm';
+import { getTrialUrl } from '../utils/trialUrl';
 
 export default function MasterlistDetail() {
   const { id } = useParams();
@@ -16,7 +18,9 @@ export default function MasterlistDetail() {
   const [error, setError] = useState('');
   const [nctInput, setNctInput] = useState('');
   const [selectedTrial, setSelectedTrial] = useState(null);
+  const [editingTrial, setEditingTrial] = useState(null);
   const [trialSearch, setTrialSearch] = useState('');
+  const [exporting, setExporting] = useState(false);
   const { confirm, dialogProps } = useConfirm();
 
   const loadMasterlist = async () => {
@@ -81,6 +85,26 @@ export default function MasterlistDetail() {
     }
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await axiosClient.get(`/masterlists/${id}/export`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${masterlist.name.replace(/[^a-z0-9\-_]+/gi, '_')}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      toast.error(extractErrorMessage(err, 'Failed to export masterlist'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleDeleteMasterlist = async () => {
     const ok = await confirm({
       title: 'Delete this masterlist?',
@@ -117,39 +141,47 @@ export default function MasterlistDetail() {
 
   const visibleTrials = trialSearch
     ? masterlist.trials.filter(
-        (t) =>
-          t.nct.toLowerCase().includes(trialSearch.toLowerCase()) ||
-          (t.title || '').toLowerCase().includes(trialSearch.toLowerCase())
-      )
+      (t) =>
+        t.nct.toLowerCase().includes(trialSearch.toLowerCase()) ||
+        (t.title || '').toLowerCase().includes(trialSearch.toLowerCase())
+    )
     : masterlist.trials;
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap justify-between gap-3">
-        <div>
-          <h1 className="mb-1 text-xl font-semibold">{masterlist.name}</h1>
-          <div className="text-sm text-[var(--color-text-muted)]">
-            Cancer type: {masterlist.cancerType}
-          </div>
-          <div className="mt-0.5 text-xs text-slate-500">
-            Trials: {masterlist.trials?.length ?? 0}
-          </div>
-        </div>
-        <button className="btn-danger h-fit" onClick={handleDeleteMasterlist}>
-          Delete Masterlist
-        </button>
-      </div>
-
-      <Link to="/" className="text-sm text-[var(--color-accent)]">
-        &larr; Back to all masterlists
+      <Link to="/" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        All masterlists
       </Link>
 
-      <section
-        className="card mt-5 mb-6 p-4"
-        style={{ background: 'radial-gradient(circle at top left, rgba(74,222,128,0.16), transparent 60%), var(--color-surface-elevated)' }}
-      >
-        <h2 className="mb-2 text-sm font-semibold">Add trial(s) by NCT ID</h2>
-        <form onSubmit={handleAddTrials} className="flex flex-col gap-2">
+      <div className="page-header mt-2">
+        <div>
+          <h1 className="page-title">{masterlist.name}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="badge-accent">{masterlist.cancerType}</span>
+            <span className="badge">
+              {masterlist.trials?.length ?? 0} trial{masterlist.trials?.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        </div>
+        <div className="flex h-fit shrink-0 gap-2">
+          <button className="btn-secondary" onClick={handleExport} disabled={exporting}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            </svg>
+            {exporting ? 'Exporting…' : 'Export to Word'}
+          </button>
+          <button className="btn-danger" onClick={handleDeleteMasterlist}>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <section className="card mb-6 p-5 sm:p-6">
+        <h2 className="mb-3 text-base font-semibold text-[var(--color-text)]">Add trial(s) by NCT ID</h2>
+        <form onSubmit={handleAddTrials} className="flex flex-col gap-3">
           <textarea
             rows={2}
             placeholder="Enter NCT id or comma-separated NCT ids, e.g. NCT00001372, NCT01234567"
@@ -167,17 +199,39 @@ export default function MasterlistDetail() {
       </section>
 
       <section>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">Trials in this masterlist</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--color-text)]">Trials in this masterlist</h2>
+            {masterlist.trials?.length > 0 && (
+              <p className="mt-0.5 text-xs text-[var(--color-text-faint)]">
+                Grouped by study type, then phase.
+              </p>
+            )}
+          </div>
           {masterlist.trials?.length > 0 && (
-            <input
-              type="search"
-              placeholder="Filter by NCT or title…"
-              value={trialSearch}
-              onChange={(e) => setTrialSearch(e.target.value)}
-              className="field max-w-xs"
-              aria-label="Filter trials"
-            />
+            <div className="relative w-full max-w-xs">
+              <svg
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Filter by NCT or title…"
+                value={trialSearch}
+                onChange={(e) => setTrialSearch(e.target.value)}
+                className="field pl-9"
+                aria-label="Filter trials"
+              />
+            </div>
           )}
         </div>
 
@@ -186,9 +240,9 @@ export default function MasterlistDetail() {
         ) : visibleTrials.length === 0 ? (
           <EmptyState title="No trials match your filter" />
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {visibleTrials.map((t) => (
-              <li key={t.nct} className="card p-4">
+              <li key={t.nct} className="card p-5 hover:border-[var(--color-accent)]/40">
                 <div className="flex justify-between gap-4">
                   <div
                     className="min-w-0 flex-1 cursor-pointer"
@@ -197,25 +251,50 @@ export default function MasterlistDetail() {
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && setSelectedTrial(t)}
                   >
-                    <div className="font-semibold">
-                      {t.nct} &mdash; {t.title}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="badge">{t.nct}</span>
+                      {t.phase && <span className="badge">{t.phase}</span>}
+                      {t.study_type && <span className="badge">{t.study_type}</span>}
                     </div>
-                    <div className="mt-0.5 text-sm text-[var(--color-text-muted)]">
-                      Phase: {t.phase || 'N/A'} &middot; Study: {t.study_type || 'N/A'} &middot; Sponsor:{' '}
-                      {t.sponsor || 'N/A'}
+                    <div className="mt-2 font-semibold leading-snug text-[var(--color-text)]">
+                      {t.title || 'Untitled trial'}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {t.location?.length
-                        ? `${t.location.length} Canadian location${t.location.length > 1 ? 's' : ''}`
-                        : 'No Canadian locations captured'}
+                    <div className="mt-1.5 text-sm text-[var(--color-text-muted)]">
+                      Sponsor: {t.sponsor || 'N/A'}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-faint)]">
+                      <span>
+                        {t.location?.length
+                          ? `${t.location.length} location${t.location.length > 1 ? 's' : ''} (Canada / Bethesda, MD)`
+                          : 'No qualifying locations captured'}
+                      </span>
+                      {getTrialUrl(t) && (
+                        <a
+                          href={getTrialUrl(t)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-medium text-[var(--color-accent)] hover:underline"
+                        >
+                          View on ClinicalTrials.gov &rarr;
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <button
-                    className="btn-danger h-fit self-center shrink-0"
-                    onClick={() => handleDeleteTrial(t.nct)}
-                  >
-                    Remove
-                  </button>
+                  <div className="flex h-fit shrink-0 flex-col items-stretch gap-2 self-center sm:flex-row">
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setEditingTrial(t)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn-danger"
+                      onClick={() => handleDeleteTrial(t.nct)}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -224,6 +303,14 @@ export default function MasterlistDetail() {
       </section>
 
       {selectedTrial && <TrialModal trial={selectedTrial} onClose={() => setSelectedTrial(null)} />}
+      {editingTrial && (
+        <EditTrialModal
+          masterlistId={id}
+          trial={editingTrial}
+          onClose={() => setEditingTrial(null)}
+          onSaved={(updated) => setMasterlist(updated)}
+        />
+      )}
       <ConfirmDialog {...dialogProps} />
     </div>
   );

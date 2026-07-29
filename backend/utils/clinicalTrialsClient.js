@@ -62,6 +62,17 @@ function extractLocations(root) {
 
     const locationStr = [facilityName, city, state, country].filter(Boolean).join(', ');
 
+    // Bethesda, Maryland is explicitly allowed — it hosts the NIH Clinical
+    // Center and is the one U.S. site this portal tracks alongside Canada.
+    const isBethesdaMaryland =
+      city.trim().toLowerCase() === 'bethesda' &&
+      ['md', 'maryland'].includes(state.trim().toLowerCase());
+
+    if (isBethesdaMaryland) {
+      locations.push(locationStr);
+      return;
+    }
+
     if (country && country.toLowerCase() === 'canada') {
       locations.push(locationStr);
       return;
@@ -144,7 +155,8 @@ function extractCriteria(root) {
 
 /**
  * Fetches and parses a single trial from clinicaltrials.gov by NCT id.
- * Location filtering intentionally keeps only Canadian (or plausibly Canadian) sites.
+ * Location filtering intentionally keeps only Canadian (or plausibly Canadian)
+ * sites, plus Bethesda, Maryland (the NIH Clinical Center).
  */
 async function fetchTrialByNct(nctId) {
   const url = `https://clinicaltrials.gov/ct2/show/${nctId}?displayxml=true`;
@@ -172,6 +184,7 @@ async function fetchTrialByNct(nctId) {
     phase,
     study_type: studyType,
     sponsor,
+    url: `https://clinicaltrials.gov/study/${nctId}`,
     location: locations,
     inclusion_criteria: inclusionCriteria,
     exclusion_criteria: exclusionCriteria
